@@ -1,0 +1,81 @@
+{
+  "name": "keycloak-management-client",
+  "version": "0.0.1",
+  "description": "Keycloak Management API client",
+  "main": "./dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "prepublishOnly": "pnpm run build",
+    "test": "nyc mocha",
+    "lint": "tsc --project tsconfig.test.json --noEmit && eslint src test",
+    "test:build": "tsc --project tsconfig.test.json && mocha test-dist/test/**/*.js",
+    "coverage": "nyc report --reporter=lcovonly"
+  },
+  "files": [
+    "dist"
+  ],
+  "mocha": {
+    "exit": true,
+    "extension": [
+      "ts",
+      "js"
+    ],
+    "recursive": true,
+    "require": [
+      "ts-node/register",
+      "source-map-support/register"
+    ],
+    "file": [
+      "test/mocha.env.ts"
+    ],
+    "reporters": [
+      "spec",
+      "mocha-junit-reporter"
+    ]
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mharj/keycloak-management-client.git"
+  },
+  "keywords": [
+    "keycloak",
+    "management"
+  ],
+  "author": "mharj",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/mharj/keycloak-management-client/issues"
+  },
+  "homepage": "https://github.com/mharj/keycloak-management-client#readme",
+  "devDependencies": {
+    "@types/chai": "^4.3.6",
+    "@types/mocha": "^10.0.1",
+    "@types/node": "^18",
+    "@typescript-eslint/eslint-plugin": "^6.7.0",
+    "@typescript-eslint/parser": "^6.7.0",
+    "chai": "^4.3.8",
+    "dotenv": "^16.3.1",
+    "eslint": "^8.49.0",
+    "eslint-config-prettier": "^9.0.0",
+    "eslint-config-standard": "^17.1.0",
+    "eslint-import-resolver-typescript": "^3.6.0",
+    "eslint-plugin-deprecation": "^2.0.0",
+    "eslint-plugin-import": "^2.28.1",
+    "eslint-plugin-prettier": "^5.0.0",
+    "eslint-plugin-sonarjs": "^0.21.0",
+    "mocha": "^10.2.0",
+    "nyc": "^15.1.0",
+    "prettier": "^3.0.3",
+    "tachyon-drive": "^0.3.3",
+    "tachyon-drive-node-fs": "^0.3.1",
+    "ts-node": "^10.9.1",
+    "typescript": "^5.2.2",
+    "zlib": "^1.0.5"
+  },
+  "dependencies": {
+    "@avanio/logger-like": "^0.1.1",
+    "jwt-decode": "^3.1.2",
+    "tslib": "^2.6.2",
+    "zod": "^3.22.2"
+  }
+}
