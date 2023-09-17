@@ -46,6 +46,9 @@ export class FetchSnapshotStore {
 		const data = await this.driver.hydrate();
 		if (data) {
 			this.logger?.info(`Hydrated ${data.size} entries from ${this.fileName}`);
+			data.forEach((value, key) => {
+				this.logger?.debug(`Hydrated key: ${key}`);
+			});
 			this.cache = data;
 		}
 	}
@@ -84,6 +87,7 @@ export class FetchSnapshotStore {
 	public async fetch(input: RequestInfo | URL, init?: RequestInit | undefined): Promise<Response> {
 		const req = new Request(input, init);
 		const key = this.keyBuilder(req, this.readIndex);
+		this.assertRequest(req);
 		this.readIndex++;
 		const cached = this.cache.get(key);
 		if (cached?.res) {
@@ -92,6 +96,13 @@ export class FetchSnapshotStore {
 		}
 		this.logger?.debug(`JSON Read: ${key} not-found`);
 		return new Response(null, {status: 404, statusText: 'Not Found'});
+	}
+
+	private assertRequest(req: Request): void {
+		const url = new URL(req.url);
+		if (!url.protocol.startsWith('http')) {
+			throw new Error('fetch failed');
+		}
 	}
 
 	/**

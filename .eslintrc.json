@@ -3,7 +3,7 @@
 	"parserOptions": {
 		"ecmaVersion": 2020,
 		"sourceType": "module",
-		"project": "./tsconfig.test.json"
+		"project": "./tsconfig.eslint.json"
 	},
 	"plugins": ["@typescript-eslint", "prettier", "sonarjs", "deprecation", "import"],
 	"extends": [
