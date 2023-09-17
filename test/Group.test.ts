@@ -9,7 +9,7 @@ import {GroupCount} from '../src/types/group/GroupCount';
 
 chai.use(chaiSubset);
 
-const expect = chai.expect;
+// const expect = chai.expect;
 
 const store = new FetchSnapshotStore('./test/data/groupFetchSnapshot.json.gz'); // req & res fetch snapshot store for offline unit testing
 // setup fetch proxy read or write operation depending on isOnline flag
