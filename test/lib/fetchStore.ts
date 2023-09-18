@@ -53,11 +53,14 @@ export class FetchSnapshotStore {
 		}
 	}
 
+	public async saveStore(): Promise<void> {
+		return this.driver.store(this.cache);
+	}
+
 	public async store(req: Request, res: Response): Promise<void> {
 		const key = this.keyBuilder(req.clone(), this.writeIndex);
 		this.writeIndex++;
 		this.cache.set(key, {req: await this.exportRequest(req), res: await this.exportResponse(res)});
-		await this.driver.store(this.cache);
 	}
 
 	public async deleteStore(): Promise<void> {

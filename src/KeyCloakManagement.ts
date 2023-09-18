@@ -6,15 +6,17 @@ import {errorString} from './lib/errorUtils';
 import {handleJsonRequest, handleVoidRequest} from './lib/httpUtils';
 import {testAssertSchema} from './lib/zodUtils';
 import {AccessTokenCallback} from './types/auth/authToken';
+import {CreateGroup} from './types/group/CreateGroup';
+import {Group, groupSchema} from './types/group/Group';
 import {GroupCount, groupCountSchema} from './types/group/GroupCount';
+import {QueryGroups} from './types/group/QueryGroups';
 import {Loadable} from './types/Loadable';
 import {CreateRole} from './types/role/CreateRole';
 import {GetRole, getRoleSchema} from './types/role/GetRole';
 import {QueryRole} from './types/role/QueryRole';
-import {RoleList, roleListSchema} from './types/role/RoleList';
-import {CreateUserRequest} from './types/user/CreateUser';
-import {GetUserResponse, getUserSchemaResponse} from './types/user/GetUser';
-import {GetUserArray, getUserArraySchema} from './types/user/GetUserArray';
+import {Role, roleSchema} from './types/role/Role';
+import {CreateUser} from './types/user/CreateUser';
+import {GetUser, getUserSchema} from './types/user/GetUser';
 import {QueryUser} from './types/user/QueryUser';
 import {UpdateUserRequest} from './types/user/UpdateUser';
 
@@ -63,12 +65,39 @@ export class KeyCloakManagement {
 		return result;
 	}
 
-	public async queryRoles(query: QueryRole = {}, realm: string = 'master'): Promise<Result<RoleList, KeyCloakError>> {
+	public async createGroup(groups: CreateGroup, realm: string = 'master'): Promise<Result<void, KeyCloakError>> {
+		const {base, headers, body} = await this.buildHeaders(groups);
+		const req = new Request(`${base}/admin/realms/${realm}/groups`, {headers, body, method: 'POST'});
+		return handleVoidRequest(this.fetchClient, req, `create group ${groups.name}`, realm, this.logger);
+	}
+
+	public async createChildGroup(parentGroupId: string, groups: CreateGroup, realm: string = 'master'): Promise<Result<void, KeyCloakError>> {
+		const {base, headers, body} = await this.buildHeaders(groups);
+		const req = new Request(`${base}/admin/realms/${realm}/groups/${parentGroupId}/children`, {headers, body, method: 'POST'});
+		return handleVoidRequest(this.fetchClient, req, `create child group ${groups.name}`, realm, this.logger);
+	}
+
+	public async queryGroups(query: QueryGroups = {}, realm: string = 'master'): Promise<Result<Group[], KeyCloakError>> {
+		const search = new URLSearchParams(Object.entries(query).map(([k, v]) => [k, v.toString()]));
+		const {base, headers} = await this.buildHeaders();
+		const req = new Request(`${base}/admin/realms/${realm}/groups?${search.toString()}`, {headers});
+		const result = await handleJsonRequest(this.fetchClient, req, 'list groups', realm, this.logger);
+		testAssertSchema(groupSchema.array(), result);
+		return result;
+	}
+
+	public async deleteGroup(groupsId: string, realm: string = 'master'): Promise<Result<void, KeyCloakError>> {
+		const {base, headers} = await this.buildHeaders();
+		const req = new Request(`${base}/admin/realms/${realm}/groups/${groupsId}`, {headers, method: 'DELETE'});
+		return handleVoidRequest(this.fetchClient, req, `delete group ${groupsId}`, realm, this.logger);
+	}
+
+	public async queryRoles(query: QueryRole = {}, realm: string = 'master'): Promise<Result<Role[], KeyCloakError>> {
 		const search = new URLSearchParams(Object.entries(query).map(([k, v]) => [k, v.toString()]));
 		const {base, headers} = await this.buildHeaders();
 		const req = new Request(`${base}/admin/realms/${realm}/roles?${search.toString()}`, {headers});
 		const result = await handleJsonRequest(this.fetchClient, req, 'list roles', realm, this.logger);
-		testAssertSchema(roleListSchema, result);
+		testAssertSchema(roleSchema.array(), result);
 		return result;
 	}
 
@@ -99,7 +128,7 @@ export class KeyCloakManagement {
 	 * @param user
 	 * @returns
 	 */
-	public async createUser(user: CreateUserRequest, realm: string = 'master'): Promise<Result<void, KeyCloakError>> {
+	public async createUser(user: CreateUser, realm: string = 'master'): Promise<Result<void, KeyCloakError>> {
 		const {base, headers, body} = await this.buildHeaders(user);
 		const req = new Request(`${base}/admin/realms/${realm}/users`, {method: 'POST', headers, body});
 		return handleVoidRequest(this.fetchClient, req, `create user ${user.username}`, realm, this.logger);
@@ -111,12 +140,12 @@ export class KeyCloakManagement {
 		return handleVoidRequest(this.fetchClient, req, `update user ${id}`, realm, this.logger);
 	}
 
-	public async queryUser(query: QueryUser = {}, realm: string = 'master'): Promise<Result<GetUserArray, KeyCloakError>> {
+	public async queryUser(query: QueryUser = {}, realm: string = 'master'): Promise<Result<GetUser[], KeyCloakError>> {
 		const {base, headers} = await this.buildHeaders();
 		const search = new URLSearchParams(Object.entries(query).map(([k, v]) => [k, v.toString()]));
 		const req = new Request(`${base}/admin/realms/${realm}/users?${search.toString()}`, {headers});
 		const result = await handleJsonRequest(this.fetchClient, req, `query user ${search.toString}`, realm, this.logger);
-		testAssertSchema(getUserArraySchema, result);
+		testAssertSchema(getUserSchema.array(), result);
 		return result;
 	}
 
@@ -127,11 +156,11 @@ export class KeyCloakManagement {
 	 * @param userId
 	 * @returns
 	 */
-	public async getUser(userId: string, realm: string = 'master'): Promise<Result<GetUserResponse, KeyCloakError>> {
+	public async getUser(userId: string, realm: string = 'master'): Promise<Result<GetUser | undefined, KeyCloakError>> {
 		const {base, headers} = await this.buildHeaders();
 		const req = new Request(`${base}/admin/realms/${realm}/users/${userId}`, {headers});
 		const result = await handleJsonRequest(this.fetchClient, req, `get user ${userId}`, realm, this.logger, {allowNotFound: true});
-		testAssertSchema(getUserSchemaResponse, result);
+		testAssertSchema(getUserSchema.optional(), result);
 		return result;
 	}
 

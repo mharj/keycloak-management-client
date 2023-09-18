@@ -4,7 +4,8 @@ import * as chai from 'chai';
 import * as chaiSubset from 'chai-subset';
 import {isOnline, kcUrl, prepareSnapshotStore, tokenValidation} from './common';
 import {FetchSnapshotStore} from './lib/fetchStore';
-import {CliAuth, GetRole, KeyCloakManagement, RoleList} from '../src';
+import {WatchTestStatus} from './lib/mochaUtils';
+import {CliAuth, GetRole, KeyCloakManagement, Role} from '../src';
 
 chai.use(chaiSubset);
 
@@ -14,13 +15,19 @@ const store = new FetchSnapshotStore('./test/data/roleFetchSnapshot.json.gz'); /
 // setup fetch proxy read or write operation depending on isOnline flag
 const fetchClient = store.buildFetchProxy(isOnline);
 
+const watchTestStatus = new WatchTestStatus();
+
 /**
  * unit test for KeyCloakManagement
  */
 let kc: KeyCloakManagement;
 
 describe(`Role [${isOnline ? 'online' : 'offline'}] test`, function () {
+	afterEach(function () {
+		watchTestStatus.check(this);
+	});
 	before(async function () {
+		watchTestStatus.start();
 		await prepareSnapshotStore(store);
 		// create KeyCloakManagement instance with custom fetchClient and tokenValidation depending on online/offline mode (offline mode will not check token expiration)
 		const auth = new CliAuth(kcUrl, {fetchClient, tokenValidation});
@@ -29,7 +36,7 @@ describe(`Role [${isOnline ? 'online' : 'offline'}] test`, function () {
 	});
 	describe('roles', function () {
 		it('should get list of roles', async function () {
-			const _payload: RoleList = (await kc.queryRoles()).unwrap();
+			const _payload: Role[] = (await kc.queryRoles()).unwrap();
 			expect(_payload).to.be.an('array');
 		});
 		it('should create new role', async function () {
@@ -42,5 +49,10 @@ describe(`Role [${isOnline ? 'online' : 'offline'}] test`, function () {
 		it('should delete role', async function () {
 			const _callRetType: void = (await kc.deleteRole('UnitTestRole')).unwrap();
 		});
+	});
+	after(async function () {
+		if (isOnline && watchTestStatus.getState()) {
+			await store.saveStore();
+		}
 	});
 });

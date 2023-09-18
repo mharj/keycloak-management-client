@@ -4,7 +4,7 @@ import {userCredentialsSchema} from './UserCredentials';
 /**
  * https://www.keycloak.org/docs-api/22.0.3/rest-api/#UserRepresentation
  */
-export const createUserRequestSchema = z.object({
+export const createUserSchema = z.object({
 	credentials: z.array(userCredentialsSchema).optional(),
 	email: z.string().email().optional(),
 	enabled: z.boolean().optional(),
@@ -13,4 +13,4 @@ export const createUserRequestSchema = z.object({
 	username: z.string(),
 });
 
-export type CreateUserRequest = z.infer<typeof createUserRequestSchema>;
+export type CreateUser = z.infer<typeof createUserSchema>;

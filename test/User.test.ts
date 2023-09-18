@@ -3,7 +3,8 @@ import 'mocha';
 import * as chai from 'chai';
 import {isOnline, kcUrl, prepareSnapshotStore, tokenValidation} from './common';
 import {FetchSnapshotStore} from './lib/fetchStore';
-import {CliAuth, CreateUserRequest, GetUserArray, GetUserResponse, KeyCloakManagement} from '../src';
+import {WatchTestStatus} from './lib/mochaUtils';
+import {CliAuth, CreateUser, GetUser, KeyCloakManagement} from '../src';
 
 const expect = chai.expect;
 
@@ -11,11 +12,13 @@ const store = new FetchSnapshotStore('./test/data/userFetchSnapshot.json.gz'); /
 // setup fetch proxy read or write operation depending on isOnline flag
 const fetchClient = store.buildFetchProxy(isOnline);
 
+const watchTestStatus = new WatchTestStatus();
+
 /**
  * unit test for KeyCloakManagement
  */
 let kc: KeyCloakManagement;
-let currentUserRequest: CreateUserRequest;
+let currentUserRequest: CreateUser;
 let testUserId: string | undefined;
 
 /**
@@ -24,12 +27,12 @@ let testUserId: string | undefined;
 const test01UserData = {
 	username: 'test01',
 	credentials: [{type: 'password', value: 'demo1password2', temporary: false}],
-} satisfies CreateUserRequest;
+} satisfies CreateUser;
 
 const test02UserData = {
 	username: 'test02',
 	email: 'unit@test.to',
-} satisfies CreateUserRequest;
+} satisfies CreateUser;
 
 /**
  * check demoUserId is defined (type guard), otherwise skip test
@@ -41,7 +44,11 @@ function assertUserId(ctx: Mocha.Context, userId: string | undefined): asserts u
 }
 
 describe(`User [${isOnline ? 'online' : 'offline'}] test`, function () {
+	afterEach(function () {
+		watchTestStatus.check(this);
+	});
 	before(async function () {
+		watchTestStatus.start();
 		await prepareSnapshotStore(store);
 		// create KeyCloakManagement instance with custom fetchClient and tokenValidation depending on online/offline mode (offline mode will not check token expiration)
 		const auth = new CliAuth(kcUrl, {fetchClient, tokenValidation});
@@ -59,19 +66,19 @@ describe(`User [${isOnline ? 'online' : 'offline'}] test`, function () {
 		});
 		it(`should query user`, async function () {
 			expect(testUserId).to.be.undefined;
-			const res: GetUserArray = (await kc.queryUser({username: currentUserRequest.username})).unwrap();
+			const res: GetUser[] = (await kc.queryUser({username: currentUserRequest.username})).unwrap();
 			expect(res.length).to.equal(1);
 			testUserId = res[0].id;
 		});
 		it(`should get user with id`, async function () {
 			assertUserId(this, testUserId);
-			const user: GetUserResponse = (await kc.getUser(testUserId)).unwrap();
+			const user: GetUser | undefined = (await kc.getUser(testUserId)).unwrap();
 			expect(user?.username).to.equal(currentUserRequest.username);
 		});
 		it(`should update user`, async function () {
 			assertUserId(this, testUserId);
 			const _callRetType: void = (await kc.updateUser(testUserId, {firstName: 'Demo', lastName: 'User'})).unwrap();
-			const user: GetUserResponse = (await kc.getUser(testUserId)).unwrap();
+			const user: GetUser | undefined = (await kc.getUser(testUserId)).unwrap();
 			expect(user?.firstName).to.equal('Demo');
 			expect(user?.lastName).to.equal('User');
 		});
@@ -91,19 +98,19 @@ describe(`User [${isOnline ? 'online' : 'offline'}] test`, function () {
 		});
 		it(`should query user`, async function () {
 			expect(testUserId).to.be.undefined;
-			const res: GetUserArray = (await kc.queryUser({username: currentUserRequest.username})).unwrap();
+			const res: GetUser[] = (await kc.queryUser({username: currentUserRequest.username})).unwrap();
 			expect(res.length).to.equal(1);
 			testUserId = res[0].id;
 		});
 		it(`should get user with id`, async function () {
 			assertUserId(this, testUserId);
-			const user: GetUserResponse = (await kc.getUser(testUserId)).unwrap();
+			const user: GetUser | undefined = (await kc.getUser(testUserId)).unwrap();
 			expect(user?.username).to.equal(currentUserRequest.username);
 		});
 		it(`should update user`, async function () {
 			assertUserId(this, testUserId);
 			const _callRetType: void = (await kc.updateUser(testUserId, {firstName: 'Demo', lastName: 'User'})).unwrap();
-			const user: GetUserResponse = (await kc.getUser(testUserId)).unwrap();
+			const user: GetUser | undefined = (await kc.getUser(testUserId)).unwrap();
 			expect(user?.firstName).to.equal('Demo');
 			expect(user?.lastName).to.equal('User');
 		});
@@ -121,6 +128,9 @@ describe(`User [${isOnline ? 'online' : 'offline'}] test`, function () {
 					await kc.deleteUser(res[0].id);
 				}
 			}
+		}
+		if (isOnline && watchTestStatus.getState()) {
+			await store.saveStore();
 		}
 	});
 });

@@ -19,6 +19,4 @@ export const getUserSchema = z.object({
 	username: z.string(),
 });
 
-export const getUserSchemaResponse = z.union([z.undefined(), getUserSchema]);
-
-export type GetUserResponse = z.infer<typeof getUserSchemaResponse>;
+export type GetUser = z.infer<typeof getUserSchema>;

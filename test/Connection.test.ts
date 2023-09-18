@@ -46,4 +46,9 @@ describe(`Connection [${isOnline ? 'online' : 'offline'}] test`, function () {
 		const kc = new KeyCloakManagement(kcUrl, auth.getAccessToken, {fetchClient});
 		(await kc.getGroupCount()).unwrap();
 	});
+	this.afterAll(async function () {
+		if (isOnline && this.currentTest?.state === 'passed') {
+			await store.saveStore();
+		}
+	});
 });
