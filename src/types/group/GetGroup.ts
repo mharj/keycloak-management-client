@@ -11,7 +11,7 @@ const groupSchemaBase = z.object({
 });
 
 export const groupSchema = groupSchemaBase.extend({
-	subGroups: z.array(groupSchemaBase),
+	subGroups: z.array(groupSchemaBase).optional(),
 });
 
 export type Group = z.infer<typeof groupSchema>;
