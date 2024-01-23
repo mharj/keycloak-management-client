@@ -1,6 +1,6 @@
 {
   "name": "keycloak-management-client",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "Keycloak Management API client",
   "main": "./dist/index.js",
   "scripts": {
