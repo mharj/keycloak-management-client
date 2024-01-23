@@ -1,5 +1,5 @@
 import {ILoggerLike} from '@avanio/logger-like';
-import {Err, Ok, Result} from 'mharj-result';
+import {Err, Ok, Result} from '@luolapeikko/result-option';
 import {errorString} from './errorUtils';
 import {FetchError} from '../FetchError';
 import {HttpResponseError} from '../HttpResponseError';

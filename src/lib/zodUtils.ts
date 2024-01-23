@@ -1,4 +1,4 @@
-import {Result} from 'mharj-result';
+import {Result} from '@luolapeikko/result-option';
 import {z} from 'zod';
 
 export function zodErrorToString(error: z.ZodError): string {
