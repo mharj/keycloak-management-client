@@ -1,5 +1,5 @@
 import * as zlib from 'zlib';
-import {IStoreProcessor} from 'tachyon-drive';
+import {type IStoreProcessor} from 'tachyon-drive';
 
 function unzip(data: Buffer): Promise<Buffer> {
 	return new Promise((resolve, reject) => {
@@ -29,6 +29,7 @@ function zip(data: Buffer): Promise<Buffer> {
  * GZip compression processor for Tachyon Drive
  */
 export const zipProcessor: IStoreProcessor<Buffer> = {
+	name: 'zipProcessor',
 	preStore: (data: Buffer) => zip(data),
 	postHydrate: (buffer: Buffer) => unzip(buffer),
 };

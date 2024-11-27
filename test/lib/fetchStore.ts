@@ -1,11 +1,11 @@
 import {existsSync} from 'fs';
-import {ILoggerLike} from '@avanio/logger-like';
-import {IPersistSerializer, IStorageDriver} from 'tachyon-drive';
+import {type ILoggerLike} from '@avanio/logger-like';
+import {type IPersistSerializer, type IStorageDriver} from 'tachyon-drive';
 import {FileStorageDriver} from 'tachyon-drive-node-fs';
 import {z} from 'zod';
-import {JsonRequest} from './JsonRequest';
+import {type JsonRequest} from './JsonRequest';
 import {jsonRequestResponseSchema} from './JsonRequestResponse';
-import {JsonResponse} from './JsonResponse';
+import {type JsonResponse} from './JsonResponse';
 import {StoreResponse} from './StoreResponse';
 import {zipProcessor} from './zipProcessor';
 
@@ -14,6 +14,7 @@ const cacheDataSchema = z.map(z.string(), jsonRequestResponseSchema);
 type CacheData = z.infer<typeof cacheDataSchema>;
 
 const bufferSerializer: IPersistSerializer<CacheData, Buffer> = {
+	name: 'bufferSerializer',
 	serialize: (data: CacheData) => Buffer.from(JSON.stringify(Array.from(data))),
 	deserialize: (buffer: Buffer) => new Map(JSON.parse(buffer.toString())),
 	validator: (data: CacheData) => cacheDataSchema.safeParse(data).success, // optional deserialization validation
@@ -32,7 +33,7 @@ export class FetchSnapshotStore {
 	private writeIndex = 0;
 	private readIndex = 0;
 	constructor(fileName: string, keyBuilder: FetchStoreKeyBuilder = defaultKeyBuilder, logger?: ILoggerLike) {
-		this.driver = new FileStorageDriver('FileStorageDriver', fileName, bufferSerializer, zipProcessor, logger);
+		this.driver = new FileStorageDriver('FileStorageDriver', {fileName}, bufferSerializer, zipProcessor, logger);
 		this.driver.init();
 		this.keyBuilder = keyBuilder;
 		this.fileName = fileName;

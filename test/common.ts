@@ -1,6 +1,7 @@
 import * as dotEnv from 'dotenv';
-import {FetchSnapshotStore} from './lib/fetchStore';
-import {TokenValidationCallback} from '../src';
+import {type RunnerTask} from 'vitest';
+import {type TokenValidationCallback} from '../src';
+import {type FetchSnapshotStore} from './lib/fetchStore';
 
 dotEnv.config();
 
@@ -15,7 +16,16 @@ export const tokenValidation: TokenValidationCallback | undefined = isOnline ? u
  */
 export async function prepareSnapshotStore(store: FetchSnapshotStore) {
 	// we will write, clear old store for snapshot update
-	isOnline && (await store.deleteStore());
+	if (isOnline) {
+		await store.deleteStore();
+	}
 	// initialize store
 	await store.init();
+}
+
+export function getPassedStatus(tasks: RunnerTask[]) {
+	return tasks.every((task) => {
+		const state = task.result?.state;
+		return state === 'pass' || state === 'skip';
+	});
 }

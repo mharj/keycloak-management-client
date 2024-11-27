@@ -1,20 +1,16 @@
-/* eslint-disable no-unused-expressions */
-import 'mocha';
-import * as chai from 'chai';
-import {isOnline, kcUrl, prepareSnapshotStore, tokenValidation} from './common';
+import {afterAll, beforeAll, describe, expect, it} from 'vitest';
+import {getPassedStatus, isOnline, kcUrl, prepareSnapshotStore, tokenValidation} from './common';
 import {FetchSnapshotStore} from './lib/fetchStore';
 import {CliAuth, KeyCloakManagement} from '../src/';
 import {FetchError} from '../src/FetchError';
 import {HttpResponseError} from '../src/HttpResponseError';
-
-const expect = chai.expect;
 
 const store = new FetchSnapshotStore('./test/data/loginFetchSnapshot.json.gz'); // req & res fetch snapshot store for offline unit testing
 // setup fetch proxy read or write operation depending on isOnline flag
 const fetchClient = store.buildFetchProxy(isOnline);
 
 describe(`Connection [${isOnline ? 'online' : 'offline'}] test`, function () {
-	before(async function () {
+	beforeAll(async function () {
 		await prepareSnapshotStore(store);
 	});
 	it('should fail on broken fetch call', async function () {
@@ -46,8 +42,8 @@ describe(`Connection [${isOnline ? 'online' : 'offline'}] test`, function () {
 		const kc = new KeyCloakManagement(kcUrl, auth.getAccessToken, {fetchClient});
 		(await kc.getGroupCount()).unwrap();
 	});
-	this.afterAll(async function () {
-		if (isOnline && this.currentTest?.state === 'passed') {
+	afterAll(async function ({tasks}) {
+		if (isOnline && getPassedStatus(tasks)) {
 			await store.saveStore();
 		}
 	});

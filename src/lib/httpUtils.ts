@@ -1,33 +1,47 @@
-import {ILoggerLike} from '@avanio/logger-like';
-import {Err, Ok, Result} from '@luolapeikko/result-option';
+import {type ILoggerLike} from '@avanio/logger-like';
+import {Err, Ok, type IResult} from '@luolapeikko/result-option';
 import {errorString} from './errorUtils';
 import {FetchError} from '../FetchError';
 import {HttpResponseError} from '../HttpResponseError';
+import {type KeyCloakError} from '../KeyCloakManagement';
+
+const contentTypeKey = 'content-type';
 
 export function isJsonResponse(res: Response): boolean {
-	return res.headers.get('content-type')?.startsWith('application/json') ?? false;
+	return res.headers.get(contentTypeKey)?.startsWith('application/json') ?? false;
 }
 
-type HandleReqOptions = {
+export type HandleReqOptions = {
 	/** if enabled, 404 response is returned as undefined */
 	allowNotFound?: boolean;
 };
 
+/**
+ * Fetch request handler
+ * @param fetchClient fetch client or mock
+ * @param req Request object
+ * @param message log message
+ * @param realm current realm
+ * @param logger logger like instance
+ * @param opt options
+ * @returns IResult with Response or error
+ * @since v0.0.2
+ */
 export async function handleRequest(
 	fetchClient: typeof fetch,
 	req: Request,
 	message: string,
 	realm: string,
 	logger: ILoggerLike | undefined,
-	{allowNotFound}: HandleReqOptions = {},
-): Promise<Result<Response, FetchError | HttpResponseError>> {
+	opt: HandleReqOptions = {},
+): Promise<IResult<Response, FetchError | HttpResponseError>> {
 	logger?.debug(`API => ${req.method}: ${req.url}`);
 	try {
 		const res = await fetchClient(req);
-		const contentType = res.headers.get('content-type');
+		const contentType = res.headers.get(contentTypeKey);
 		logger?.debug(`API <= ${req.method}: ${res.url}: ${res.status} ${contentType}`);
 		if (!res.ok) {
-			if (allowNotFound && res.status === 404) {
+			if (opt.allowNotFound && res.status === 404) {
 				return Ok(res);
 			}
 			return Err(new HttpResponseError(`Unable to ${message} in realm ${realm}`, res));
@@ -38,44 +52,13 @@ export async function handleRequest(
 	}
 }
 
-export async function handleJsonRequest(
-	fetchClient: typeof fetch,
-	req: Request,
-	message: string,
-	realm: string,
-	logger: ILoggerLike | undefined,
-	opt: HandleReqOptions = {},
-): Promise<Result<unknown, FetchError | HttpResponseError | TypeError>> {
-	const result = await handleRequest(fetchClient, req, message, realm, logger, opt);
+export function handleVoidResponse(result: IResult<Response, KeyCloakError>, message: string): IResult<void, KeyCloakError> {
 	if (result.isErr) {
 		return Err(result.err());
 	}
-	const res = result.ok();
-	if (opt.allowNotFound && res.status === 404) {
-		return Ok(undefined);
-	}
-	if (!isJsonResponse(res)) {
-		return Err(new HttpResponseError(`Unable to ${message} in realm ${realm}: response is not JSON`, res));
-	}
-	try {
-		return Ok(await res.json());
-	} catch (err) {
-		// JSON parse error
-		return Err(new TypeError(`Unable to ${message} in realm ${realm}: ${errorString(err)}`));
-	}
-}
-
-export async function handleVoidRequest(
-	fetchClient: typeof fetch,
-	req: Request,
-	message: string,
-	realm: string,
-	logger: ILoggerLike | undefined,
-	opt: HandleReqOptions = {},
-): Promise<Result<void, FetchError | HttpResponseError>> {
-	const result = await handleRequest(fetchClient, req, message, realm, logger, opt);
-	if (result.isErr) {
-		return Err(result.err());
+	const contentType = result.ok().headers.get(contentTypeKey);
+	if (contentType !== null) {
+		return Err(new TypeError(`${message}: Unexpected response content-type ${contentType}`));
 	}
 	return Ok(undefined);
 }

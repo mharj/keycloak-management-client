@@ -1,10 +1,13 @@
-import {ILoggerLike} from '@avanio/logger-like';
-import {TokenValidationCallback, defaultTokenValidation} from './lib/authUtils';
+import {type ILoggerLike} from '@avanio/logger-like';
+import {type IResult} from '@luolapeikko/result-option';
+import {type Loadable, resolveLoadable} from '@luolapeikko/ts-common';
+import {type FetchError} from './FetchError';
+import {type HttpResponseError} from './HttpResponseError';
+import {type TokenValidationCallback, defaultTokenValidation} from './lib/authUtils';
 import {errorString} from './lib/errorUtils';
-import {handleJsonRequest} from './lib/httpUtils';
-import {testAssertSchema} from './lib/zodUtils';
-import {TokenResponse, tokenResponseSchema} from './types/auth/TokenResponse';
-import {Loadable} from './types/Loadable';
+import {handleRequest} from './lib/httpUtils';
+import {handleZodResponse} from './lib/zodUtils';
+import {type TokenResponse, tokenResponseSchema} from './types/auth/TokenResponse';
 
 type ApiCredentials = {
 	/** KeyCloak base url */
@@ -71,6 +74,7 @@ export class CliAuth {
 	 * Get a tokens from KeyCloak for the current credentials
 	 */
 	private async handleTokenResponse(): Promise<TokenResponse> {
+		const msg = 'get access token';
 		const {base, loginRealm, username, password} = await this.getCredentials();
 		const headers = new Headers({'Content-Type': 'application/x-www-form-urlencoded'});
 		const body = new URLSearchParams();
@@ -79,9 +83,8 @@ export class CliAuth {
 		body.append('username', username);
 		body.append('password', password);
 		const req = new Request(`${base}/realms/${loginRealm}/protocol/openid-connect/token`, {method: 'POST', headers, body});
-		const result = await handleJsonRequest(this.fetchClient, req, 'get access token', loginRealm, this.logger);
-		testAssertSchema(tokenResponseSchema, result);
-		return result.unwrap();
+		const res = await this.fetchCall(req, loginRealm, msg);
+		return (await handleZodResponse(tokenResponseSchema, res, msg)).unwrap();
 	}
 
 	/**
@@ -89,10 +92,11 @@ export class CliAuth {
 	 */
 	private async getCredentials(): Promise<ApiCredentials> {
 		if (!this.credentials) {
+			const url = await resolveLoadable(this.url);
 			try {
-				this.credentials = this.parseCredentials(await (typeof this.url === 'function' ? this.url() : this.url));
+				this.credentials = this.parseCredentials(url);
 			} catch (e) {
-				throw new TypeError(`Invalid KeyCloak url: ${this.url} (${errorString(e)})`);
+				throw new TypeError(`Invalid KeyCloak url: ${url.hash} (${errorString(e)})`);
 			}
 		}
 		return this.credentials;
@@ -120,5 +124,9 @@ export class CliAuth {
 			loginRealm = path[1];
 		}
 		return {base, loginRealm, password: url.password, username: url.username};
+	}
+
+	private async fetchCall(req: Request, realm: string, message: string): Promise<IResult<Response, FetchError | HttpResponseError>> {
+		return handleRequest(this.fetchClient, req, message, realm, this.logger);
 	}
 }
