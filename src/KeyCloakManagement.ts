@@ -1,24 +1,24 @@
-import {type ILoggerLike} from '@avanio/logger-like';
-import {type IResult} from '@luolapeikko/result-option';
+import type {ILoggerLike} from '@avanio/logger-like';
+import type {IResult} from '@luolapeikko/result-option';
 import {type Loadable, resolveLoadable} from '@luolapeikko/ts-common';
-import {type FetchError} from './FetchError';
-import {type HttpResponseError} from './HttpResponseError';
+import type {FetchError} from './FetchError';
+import type {HttpResponseError} from './HttpResponseError';
 import {errorString} from './lib/errorUtils';
 import {type HandleReqOptions, handleRequest, handleVoidResponse} from './lib/httpUtils';
 import {handleZodResponse} from './lib/zodUtils';
-import {type AccessTokenCallback} from './types/auth/authToken';
-import {type CreateChildGroupResponse, createChildGroupResponseSchema, type CreateGroup} from './types/group/CreateGroup';
+import type {AccessTokenCallback} from './types/auth/authToken';
+import {type CreateChildGroupResponse, type CreateGroup, createChildGroupResponseSchema} from './types/group/CreateGroup';
 import {type Group, groupSchema} from './types/group/Group';
 import {type GroupCount, groupCountSchema} from './types/group/GroupCount';
-import {type QueryGroups} from './types/group/QueryGroups';
-import {type CreateRole} from './types/role/CreateRole';
+import type {QueryGroups} from './types/group/QueryGroups';
+import type {CreateRole} from './types/role/CreateRole';
 import {type GetRole, getRoleSchema} from './types/role/GetRole';
-import {type QueryRole} from './types/role/QueryRole';
+import type {QueryRole} from './types/role/QueryRole';
 import {type Role, roleSchema} from './types/role/Role';
-import {type CreateUser} from './types/user/CreateUser';
+import type {CreateUser} from './types/user/CreateUser';
 import {type GetUser, getUserSchema} from './types/user/GetUser';
-import {type QueryUser} from './types/user/QueryUser';
-import {type UpdateUserRequest} from './types/user/UpdateUser';
+import type {QueryUser} from './types/user/QueryUser';
+import type {UpdateUserRequest} from './types/user/UpdateUser';
 
 export type KeyCloakError = HttpResponseError | FetchError | TypeError;
 
@@ -59,7 +59,7 @@ export class KeyCloakManagement {
 	 * @param opt optional options
 	 * @param tokenValidation optional token validation callback (default: will check if token is expired, which causes a new access token to be fetched)
 	 */
-	constructor(url: Loadable<URL>, accessTokenCallback: AccessTokenCallback, opt: KeyCloakManagementOptions = {}) {
+	public constructor(url: Loadable<URL>, accessTokenCallback: AccessTokenCallback, opt: KeyCloakManagementOptions = {}) {
 		this.url = url;
 		this.accessTokenCallback = accessTokenCallback;
 		this.fetchClient = opt.fetchClient || (typeof window !== 'undefined' && window.fetch) || fetch;
@@ -332,7 +332,7 @@ export class KeyCloakManagement {
 		return {baseUrl};
 	}
 
-	private async fetchCall(req: Request, message: string, opt: HandleReqOptions = {}): Promise<IResult<Response, KeyCloakError>> {
+	private fetchCall(req: Request, message: string, opt: HandleReqOptions = {}): Promise<IResult<Response, KeyCloakError>> {
 		return handleRequest(this.fetchClient, req, message, this.currentRealm, this.logger, opt);
 	}
 }

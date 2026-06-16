@@ -1,5 +1,5 @@
+import type {IStoreProcessor} from 'tachyon-drive';
 import * as zlib from 'zlib';
-import {type IStoreProcessor} from 'tachyon-drive';
 
 function unzip(data: Buffer): Promise<Buffer> {
 	return new Promise((resolve, reject) => {

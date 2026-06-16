@@ -1,9 +1,9 @@
 import * as dotEnv from 'dotenv';
-import {type RunnerTask} from 'vitest';
-import {type TokenValidationCallback} from '../src';
-import {type FetchSnapshotStore} from './lib/fetchStore';
+import type {RunnerTask} from 'vitest';
+import type {TokenValidationCallback} from '../src';
+import type {FetchSnapshotStore} from './lib/fetchStore';
 
-dotEnv.config();
+dotEnv.config({quiet: true});
 
 export const isOnline = !!process.env.KEYCLOAK_URL; // if KEYCLOAK_URL is set, we are using online KeyCloak
 

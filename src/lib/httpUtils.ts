@@ -1,9 +1,9 @@
-import {type ILoggerLike} from '@avanio/logger-like';
-import {Err, Ok, type IResult} from '@luolapeikko/result-option';
-import {errorString} from './errorUtils';
+import type {ILoggerLike} from '@avanio/logger-like';
+import {Err, type IResult, Ok} from '@luolapeikko/result-option';
 import {FetchError} from '../FetchError';
 import {HttpResponseError} from '../HttpResponseError';
-import {type KeyCloakError} from '../KeyCloakManagement';
+import type {KeyCloakError} from '../KeyCloakManagement';
+import {errorString} from './errorUtils';
 
 const contentTypeKey = 'content-type';
 

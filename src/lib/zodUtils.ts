@@ -1,12 +1,12 @@
-import {Err, Ok, type IResult} from '@luolapeikko/result-option';
-import {type z} from 'zod';
+import {Err, type IResult, Ok} from '@luolapeikko/result-option';
+import type {z} from 'zod';
 import {isJsonResponse} from './httpUtils';
 
 export function zodErrorToString(error: z.ZodError): string {
 	return error.issues.map((issue) => `${issue.path}: ${issue.message}`).join(', ');
 }
 
-export function zodBuildError(message: string, response: z.SafeParseError<unknown>): Error {
+export function zodBuildError(message: string, response: z.ZodSafeParseError<unknown>): Error {
 	return new Error(`${message}: ${zodErrorToString(response.error)}`);
 }
 

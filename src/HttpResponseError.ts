@@ -8,10 +8,9 @@
 export class HttpResponseError extends Error {
 	public readonly status: number;
 	public readonly url: string;
-	constructor(message: string, res: Response) {
+	public constructor(message: string, res: Response) {
 		super(message);
 		this.name = 'HttpResponseError';
-		this.stack = new Error().stack;
 		this.status = res.status;
 		this.url = res.url;
 		Error.captureStackTrace(this, this.constructor); // Creates the this.stack getter

@@ -1,6 +1,6 @@
-import {afterAll, beforeAll, describe, expect, it, type RunnerTestCase, type TaskContext, type TestContext} from 'vitest';
-import {getPassedStatus, isOnline, kcUrl, prepareSnapshotStore, tokenValidation} from './common';
+import {afterAll, beforeAll, describe, expect, it, type TestContext} from 'vitest';
 import {CliAuth, type CreateUser, type GetUser, getUserSchema, KeyCloakManagement} from '../src';
+import {getPassedStatus, isOnline, kcUrl, prepareSnapshotStore, tokenValidation} from './common';
 import {FetchSnapshotStore} from './lib/fetchStore';
 
 const store = new FetchSnapshotStore('./test/data/userFetchSnapshot.json.gz'); // req & res fetch snapshot store for offline unit testing
@@ -30,7 +30,7 @@ const test02UserData = {
 /**
  * check demoUserId is defined (type guard), otherwise skip test
  */
-function assertUserId(ctx: TaskContext<RunnerTestCase> & TestContext, userId: string | undefined): asserts userId is string {
+function assertUserId(ctx: TestContext, userId: string | undefined): asserts userId is string {
 	if (!userId) {
 		ctx.skip();
 	}
@@ -108,7 +108,7 @@ describe(`User [${isOnline ? 'online' : 'offline'}] test`, function () {
 			const _callRetType: void = (await kc.deleteUser(testUserId)).unwrap();
 		});
 	});
-	afterAll(async function ({tasks}) {
+	afterAll(async function ({}, suite) {
 		if (kc) {
 			const userNames = [test01UserData.username, test02UserData.username];
 			for (const username of userNames) {
@@ -118,7 +118,7 @@ describe(`User [${isOnline ? 'online' : 'offline'}] test`, function () {
 				}
 			}
 		}
-		if (isOnline && getPassedStatus(tasks)) {
+		if (isOnline && getPassedStatus(suite.tasks)) {
 			await store.saveStore();
 		}
 	});

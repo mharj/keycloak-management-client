@@ -1,6 +1,6 @@
 import {afterAll, beforeAll, describe, expect, it} from 'vitest';
-import {getPassedStatus, isOnline, kcUrl, prepareSnapshotStore, tokenValidation} from './common';
 import {CliAuth, type GetRole, KeyCloakManagement, type Role} from '../src';
+import {getPassedStatus, isOnline, kcUrl, prepareSnapshotStore, tokenValidation} from './common';
 import {FetchSnapshotStore} from './lib/fetchStore';
 
 const store = new FetchSnapshotStore('./test/data/roleFetchSnapshot.json.gz'); // req & res fetch snapshot store for offline unit testing
@@ -36,8 +36,8 @@ describe(`Role [${isOnline ? 'online' : 'offline'}] test`, function () {
 			const _callRetType: void = (await kc.deleteRole('UnitTestRole')).unwrap();
 		});
 	});
-	afterAll(async function ({tasks}) {
-		if (isOnline && getPassedStatus(tasks)) {
+	afterAll(async function ({}, suite) {
+		if (isOnline && getPassedStatus(suite.tasks)) {
 			await store.saveStore();
 		}
 	});

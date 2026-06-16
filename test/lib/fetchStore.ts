@@ -1,11 +1,11 @@
+import type {ILoggerLike} from '@avanio/logger-like';
 import {existsSync} from 'fs';
-import {type ILoggerLike} from '@avanio/logger-like';
-import {type IPersistSerializer, type IStorageDriver} from 'tachyon-drive';
+import type {IPersistSerializer, IStorageDriver} from 'tachyon-drive';
 import {FileStorageDriver} from 'tachyon-drive-node-fs';
 import {z} from 'zod';
-import {type JsonRequest} from './JsonRequest';
+import type {JsonRequest} from './JsonRequest';
 import {jsonRequestResponseSchema} from './JsonRequestResponse';
-import {type JsonResponse} from './JsonResponse';
+import type {JsonResponse} from './JsonResponse';
 import {StoreResponse} from './StoreResponse';
 import {zipProcessor} from './zipProcessor';
 
@@ -32,8 +32,8 @@ export class FetchSnapshotStore {
 	private logger?: ILoggerLike;
 	private writeIndex = 0;
 	private readIndex = 0;
-	constructor(fileName: string, keyBuilder: FetchStoreKeyBuilder = defaultKeyBuilder, logger?: ILoggerLike) {
-		this.driver = new FileStorageDriver('FileStorageDriver', {fileName}, bufferSerializer, zipProcessor, logger);
+	public constructor(fileName: string, keyBuilder: FetchStoreKeyBuilder = defaultKeyBuilder, logger?: ILoggerLike) {
+		this.driver = new FileStorageDriver({name: 'FileStorageDriver', logger, fileName}, bufferSerializer, zipProcessor);
 		this.driver.init();
 		this.keyBuilder = keyBuilder;
 		this.fileName = fileName;
@@ -47,14 +47,14 @@ export class FetchSnapshotStore {
 		const data = await this.driver.hydrate();
 		if (data) {
 			this.logger?.info(`Hydrated ${data.size} entries from ${this.fileName}`);
-			data.forEach((value, key) => {
+			data.forEach((_value, key) => {
 				this.logger?.debug(`Hydrated key: ${key}`);
 			});
 			this.cache = data;
 		}
 	}
 
-	public async saveStore(): Promise<void> {
+	public saveStore(): Promise<void> | void {
 		return this.driver.store(this.cache);
 	}
 
@@ -88,7 +88,7 @@ export class FetchSnapshotStore {
 	/**
 	 * this is fetch function which can be used as fetchClient in KeyCloakManagement for unit testing
 	 */
-	public async fetch(input: RequestInfo | URL, init?: RequestInit | undefined): Promise<Response> {
+	public fetch(input: RequestInfo | URL, init?: RequestInit | undefined): Promise<Response> {
 		const req = new Request(input, init);
 		const key = this.keyBuilder(req, this.readIndex);
 		this.assertRequest(req);
@@ -96,10 +96,10 @@ export class FetchSnapshotStore {
 		const cached = this.cache.get(key);
 		if (cached?.res) {
 			this.logger?.debug(`JSON Read: ${key} found`);
-			return this.importResponse(cached.res);
+			return Promise.resolve(this.importResponse(cached.res));
 		}
 		this.logger?.debug(`JSON Read: ${key} not-found`);
-		return new Response(null, {status: 404, statusText: 'Not Found'});
+		return Promise.resolve(new Response(null, {status: 404, statusText: 'Not Found'}));
 	}
 
 	private assertRequest(req: Request): void {
@@ -124,7 +124,7 @@ export class FetchSnapshotStore {
 	public get(req: Request): Response | undefined {
 		const key = this.keyBuilder(req, this.readIndex);
 		const cached = this.cache.get(key);
-		if (!cached || !cached.res) {
+		if (!cached?.res) {
 			return undefined;
 		}
 		return this.importResponse(cached.res);
@@ -182,7 +182,9 @@ export class FetchSnapshotStore {
 		if (body === null) {
 			return null;
 		}
-		return Buffer.from(body, 'base64');
+		const decoded = Buffer.from(body, 'base64');
+		// Buffer may share a larger backing store; slice to exact byte range.
+		return decoded.buffer.slice(decoded.byteOffset, decoded.byteOffset + decoded.byteLength);
 	}
 
 	/**

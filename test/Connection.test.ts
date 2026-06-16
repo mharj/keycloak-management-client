@@ -1,9 +1,9 @@
 import {afterAll, beforeAll, describe, expect, it} from 'vitest';
-import {getPassedStatus, isOnline, kcUrl, prepareSnapshotStore, tokenValidation} from './common';
-import {FetchSnapshotStore} from './lib/fetchStore';
 import {CliAuth, KeyCloakManagement} from '../src/';
 import {FetchError} from '../src/FetchError';
 import {HttpResponseError} from '../src/HttpResponseError';
+import {getPassedStatus, isOnline, kcUrl, prepareSnapshotStore, tokenValidation} from './common';
+import {FetchSnapshotStore} from './lib/fetchStore';
 
 const store = new FetchSnapshotStore('./test/data/loginFetchSnapshot.json.gz'); // req & res fetch snapshot store for offline unit testing
 // setup fetch proxy read or write operation depending on isOnline flag
@@ -42,8 +42,8 @@ describe(`Connection [${isOnline ? 'online' : 'offline'}] test`, function () {
 		const kc = new KeyCloakManagement(kcUrl, auth.getAccessToken, {fetchClient});
 		(await kc.getGroupCount()).unwrap();
 	});
-	afterAll(async function ({tasks}) {
-		if (isOnline && getPassedStatus(tasks)) {
+	afterAll(async function ({}, suite) {
+		if (isOnline && getPassedStatus(suite.tasks)) {
 			await store.saveStore();
 		}
 	});

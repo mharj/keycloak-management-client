@@ -1,10 +1,10 @@
 import {afterAll, beforeAll, describe, expect, it} from 'vitest';
-import {getPassedStatus, isOnline, kcUrl, prepareSnapshotStore, tokenValidation} from './common';
 import {CliAuth, KeyCloakManagement} from '../src';
-import {FetchSnapshotStore} from './lib/fetchStore';
-import {createChildGroupResponseSchema, type CreateChildGroupResponse} from '../src/types/group/CreateGroup';
+import {type CreateChildGroupResponse, createChildGroupResponseSchema} from '../src/types/group/CreateGroup';
 import {groupSchema} from '../src/types/group/Group';
-import {groupCountSchema, type GroupCount} from '../src/types/group/GroupCount';
+import {type GroupCount, groupCountSchema} from '../src/types/group/GroupCount';
+import {getPassedStatus, isOnline, kcUrl, prepareSnapshotStore, tokenValidation} from './common';
+import {FetchSnapshotStore} from './lib/fetchStore';
 
 const store = new FetchSnapshotStore('./test/data/groupFetchSnapshot.json.gz'); // req & res fetch snapshot store for offline unit testing
 // setup fetch proxy read or write operation depending on isOnline flag
@@ -40,7 +40,7 @@ describe(`Group [${isOnline ? 'online' : 'offline'}] test`, function () {
 	});
 	it('should get query groups', async function () {
 		const query = (await kc.queryGroups({search: 'UnitTest'})).unwrap();
-		expect(groupSchema.strict().array().safeParse(query).success).to.be.equal(true);
+		expect(groupSchema.array().safeParse(query).success).to.be.equal(true);
 		expect(query.length).to.be.equal(2);
 		expect((await kc.queryGroups({search: 'UnitTest', exact: true})).unwrap().length).to.be.equal(0);
 		expect((await kc.queryGroups({search: 'UnitTest01', exact: true})).unwrap().length).to.be.equal(1);
@@ -68,8 +68,8 @@ describe(`Group [${isOnline ? 'online' : 'offline'}] test`, function () {
 		}
 		const _payload: void = (await kc.deleteGroup(groupId)).unwrap();
 	});
-	afterAll(async function ({tasks}) {
-		if (isOnline && getPassedStatus(tasks)) {
+	afterAll(async function ({}, suite) {
+		if (isOnline && getPassedStatus(suite.tasks)) {
 			await store.saveStore();
 		}
 	});

@@ -1,9 +1,9 @@
-import {type ILoggerLike} from '@avanio/logger-like';
-import {type IResult} from '@luolapeikko/result-option';
+import type {ILoggerLike} from '@avanio/logger-like';
+import type {IResult} from '@luolapeikko/result-option';
 import {type Loadable, resolveLoadable} from '@luolapeikko/ts-common';
-import {type FetchError} from './FetchError';
-import {type HttpResponseError} from './HttpResponseError';
-import {type TokenValidationCallback, defaultTokenValidation} from './lib/authUtils';
+import type {FetchError} from './FetchError';
+import type {HttpResponseError} from './HttpResponseError';
+import {defaultTokenValidation, type TokenValidationCallback} from './lib/authUtils';
 import {errorString} from './lib/errorUtils';
 import {handleRequest} from './lib/httpUtils';
 import {handleZodResponse} from './lib/zodUtils';
@@ -33,7 +33,7 @@ export class CliAuth {
 	private tokenValidation: TokenValidationCallback;
 	private logger: ILoggerLike | undefined;
 	private fetchClient: typeof fetch;
-	constructor(url: Loadable<URL>, opt: CliAuthOptions = {}) {
+	public constructor(url: Loadable<URL>, opt: CliAuthOptions = {}) {
 		this.url = url;
 		this.logger = opt.logger;
 		this.tokenValidation = opt.tokenValidation || defaultTokenValidation;
@@ -109,7 +109,7 @@ export class CliAuth {
 	 * - / => loginRealm = master
 	 */
 	private parseCredentials(url: URL): ApiCredentials {
-		const base = url.protocol + '//' + url.hostname + (url.port ? `:${url.port}` : '');
+		const base = `${url.protocol}//${url.hostname}${url.port ? `:${url.port}` : ''}`;
 		let loginRealm = 'master';
 		// split and filter empty strings
 		const path = url.pathname.split('/').filter((p) => p !== '');
@@ -126,7 +126,7 @@ export class CliAuth {
 		return {base, loginRealm, password: url.password, username: url.username};
 	}
 
-	private async fetchCall(req: Request, realm: string, message: string): Promise<IResult<Response, FetchError | HttpResponseError>> {
+	private fetchCall(req: Request, realm: string, message: string): Promise<IResult<Response, FetchError | HttpResponseError>> {
 		return handleRequest(this.fetchClient, req, message, realm, this.logger);
 	}
 }

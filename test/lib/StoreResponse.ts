@@ -11,7 +11,7 @@ function getResponseInit(init: StoreResponseInit | undefined): ResponseInit | un
 export class StoreResponse extends Response {
 	public readonly _url: string;
 	public readonly _type: ResponseType;
-	constructor(body: BodyInit | null | undefined, init: StoreResponseInit) {
+	public constructor(body: BodyInit | null | undefined, init: StoreResponseInit) {
 		super(body, getResponseInit(init));
 		this._url = init.url;
 		this._type = init.type;
